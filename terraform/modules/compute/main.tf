@@ -1,0 +1,51 @@
+resource "azurerm_network_interface" "nic" {
+  location            = "${var.location}"
+  name                = "${var.prefix}-${count.index}-nic"
+  resource_group_name = "${var.resource_group_name}"
+  count               = "${var.instances_count}"
+
+  ip_configuration {
+    name                          = "${var.prefix}"
+    subnet_id                     = "${var.subnet_id}"
+    private_ip_address_allocation = "Dynamic"
+  }
+}
+
+resource "azurerm_virtual_machine" "vm" {
+  name                  = "${var.prefix}-${count.index}-vm"
+  location              = "${var.location}"
+  resource_group_name   = "${var.resource_group_name}"
+  network_interface_ids = ["${azurerm_network_interface.nic.*.id[count.index]}"]
+  vm_size               = "${var.vm_size}"
+
+  count = "${var.instances_count}"
+
+  storage_image_reference {
+    publisher = "Canonical"
+    offer     = "UbuntuServer"
+    sku       = "18.04-LTS"
+    version   = "latest"
+  }
+
+  storage_os_disk {
+    name              = "${var.prefix}-${count.index}-osdisk"
+    create_option     = "FromImage"
+    managed_disk_type = "Standard_LRS"
+    disk_size_gb      = 200
+    caching           = "ReadWrite"
+  }
+
+  os_profile {
+    admin_username  = "${var.username}"
+    computer_name   = "${var.prefix}-vm-${count.index}"
+  }
+
+  os_profile_linux_config {
+    disable_password_authentication = true
+
+    ssh_keys {
+      path     = "/home/${var.username}/.ssh/authorized_keys"
+      key_data = "${var.ssh_key}"
+    }
+  }
+}

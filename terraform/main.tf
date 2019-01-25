@@ -28,7 +28,7 @@ module "network" {
 }
 
 module "controllers" {
-  source = "modules\/compute"
+  source = "modules/compute"
 
   instances_count       = "1"
   username              = "zakal"

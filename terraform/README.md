@@ -5,3 +5,5 @@ Use remote state
 Run terraform in a docker container 
 
 talk: scalling with terraform startup enterprise
+
+Use availability set

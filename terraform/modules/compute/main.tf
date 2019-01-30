@@ -1,3 +1,10 @@
+resource "azurerm_availability_set" "as" {
+  location            = "${var.location}"
+  name                = "${var.prefix}-as"
+  resource_group_name = "${var.resource_group_name}"
+  managed             = true
+}
+
 resource "azurerm_network_interface" "nic" {
   location            = "${var.location}"
   name                = "${var.prefix}-${count.index}-nic"
@@ -5,7 +12,7 @@ resource "azurerm_network_interface" "nic" {
   count               = "${var.instances_count}"
 
   ip_configuration {
-    name                          = "${var.prefix}"
+    name                          = "${var.prefix}-ip-config"
     subnet_id                     = "${var.subnet_id}"
     private_ip_address_allocation = "Dynamic"
   }
@@ -17,6 +24,7 @@ resource "azurerm_virtual_machine" "vm" {
   resource_group_name   = "${var.resource_group_name}"
   network_interface_ids = ["${azurerm_network_interface.nic.*.id[count.index]}"]
   vm_size               = "${var.vm_size}"
+  availability_set_id   = "${azurerm_availability_set.as.id}"
 
   count = "${var.instances_count}"
 
@@ -37,7 +45,7 @@ resource "azurerm_virtual_machine" "vm" {
 
   os_profile {
     admin_username  = "${var.username}"
-    computer_name   = "${var.prefix}-vm-${count.index}"
+    computer_name   = "${var.prefix}-${count.index}-vm"
   }
 
   os_profile_linux_config {
@@ -49,3 +57,4 @@ resource "azurerm_virtual_machine" "vm" {
     }
   }
 }
+

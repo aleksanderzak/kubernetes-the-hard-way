@@ -14,5 +14,11 @@ variable "apiserver_node_names" {
   type = "list"
 }
 
-variable "apiserver_public_ip" {}
+variable "apiserver_public_ip" {
+
+}
+
+variable "apiserver_ip_addresses" {
+  type = "list"
+}
 

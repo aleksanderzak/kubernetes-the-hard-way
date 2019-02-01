@@ -48,8 +48,9 @@ module "pki" {
   kubelet_node_ips    = "${module.workers.private_ips}"
   kubelet_node_names  = "${module.workers.names}"
 
-  apiserver_node_names  = "${module.controllers.names}"
-  apiserver_public_ip   = "${module.load_balancer.public_ip}"
+  apiserver_node_names    = "${module.controllers.names}"
+  apiserver_public_ip     = "${module.load_balancer.public_ip}"
+  apiserver_ip_addresses  = "${module.controllers.private_ips}"
 }
 
 module "kubeconfig-kubelet" {
@@ -76,4 +77,14 @@ module "encryption_config" {
   nodes               = "${module.controllers.names}"
   bastion_host        = "${module.load_balancer.public_ip}"
   node_count          = "${var.controllers_count}"
+}
+
+module "etcd" {
+  source = "../etcd"
+
+  node_user       = "zakal"
+  bastion_host    = "${module.load_balancer.public_ip}"
+  node_count      = "${var.controllers_count}"
+  nodes           = "${module.controllers.names}"
+  nodes_ips       = "${module.controllers.private_ips}"
 }

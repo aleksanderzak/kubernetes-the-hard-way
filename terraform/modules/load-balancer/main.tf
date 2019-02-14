@@ -3,12 +3,14 @@ resource "azurerm_public_ip" "publicip" {
   location                      = "${var.location}"
   resource_group_name           = "${var.resource_group_name}"
   allocation_method             = "${var.address_allocation}"
+//  sku                           = "Standard"
 }
 
 resource "azurerm_lb" "lb" {
   name                = "${var.prefix}-lb"
   location            = "${var.location}"
   resource_group_name = "${var.resource_group_name}"
+//  sku                 = "Standard"
 
   frontend_ip_configuration {
     name                  = "primary"
@@ -25,7 +27,7 @@ resource "azurerm_lb_backend_address_pool" "backendpool" {
 resource "azurerm_network_interface_backend_address_pool_association" "lbpoolas" {
   count                   = "${var.network_interface_count}"
   network_interface_id    = "${element(var.network_interface_ids, count.index)}"
-  ip_configuration_name   = "${var.prefix}-ip-config"
+  ip_configuration_name   = "${var.prefix}-controller-ip-config"
   backend_address_pool_id = "${azurerm_lb_backend_address_pool.backendpool.id}"
 }
 

@@ -9,7 +9,7 @@ resource "tls_cert_request" "admin" {
 
   "subject" {
     common_name         = "admin"
-    organization        = "system:managers"
+    organization        = "system:masters"
     country             = "Poland"
     locality            = "Wroclaw"
     organizational_unit = "CA"

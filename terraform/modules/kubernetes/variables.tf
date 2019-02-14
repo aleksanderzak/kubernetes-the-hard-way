@@ -8,7 +8,7 @@ variable "controllers_count" {
 }
 
 variable "workers_count" {
-  default = 3
+  default = 1
 }
 
 variable "username" {
@@ -18,3 +18,4 @@ variable "username" {
 variable "ssh_key" {
 
 }
+

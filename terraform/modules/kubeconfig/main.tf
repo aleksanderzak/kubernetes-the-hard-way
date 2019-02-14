@@ -3,7 +3,7 @@ data "template_file" "kubeconfig" {
 
   vars {
     ca_pem            = "${var.ca_pem}"
-    public_ip_address = "${element(var.user, count.index)}"
+    public_ip_address = "${var.public_ip_address}"
     cluster_name      = "${var.cluster_name}"
     user              = "${element(var.user, count.index)}"
     client_cert       = "${element(var.client_cert, count.index)}"

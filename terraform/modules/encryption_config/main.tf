@@ -6,7 +6,7 @@ data "template_file" "encryption_config" {
   template = "${file("${path.module}/resources/encryption_config.template")}"
 
   vars {
-    encryption_key = "${random_string.encryption_key.result}"
+    encryption_key = "${base64encode(random_string.encryption_key.result)}"
   }
 }
 

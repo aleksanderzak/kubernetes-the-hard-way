@@ -11,7 +11,7 @@ module "controllers" {
 
   location            = "${var.location}"
   resource_group_name = "${var.resource_group_name}"
-  prefix              = "${var.prefix}"
+  prefix              = "${var.prefix}-controller"
   instances_count     = "${var.controllers_count}"
   username            = "${var.username}"
   ssh_key             = "${var.ssh_key}"
@@ -23,7 +23,7 @@ module "workers" {
 
   location            = "${var.location}"
   resource_group_name = "${var.resource_group_name}"
-  prefix              = "${var.prefix}"
+  prefix              = "${var.prefix}-worker"
   instances_count     = "${var.workers_count}"
   username            = "${var.username}"
   ssh_key             = "${var.ssh_key}"
@@ -69,11 +69,59 @@ module "kubeconfig-kubelet" {
   kubelet_count     = "${var.workers_count}"
 }
 
+module "kubeconfig-scheduler" {
+  source = "../kubeconfig"
+
+  nodes             = "${module.controllers.names}"
+  public_ip_address = "127.0.0.1"
+  bastion_host      = "${module.load_balancer.public_ip}"
+  kubeconfig_path   = "/home/zakal/kube-scheduler.kubeconfig"
+  node_user         = "zakal"
+  client_cert       = "${list(module.pki.scheduler_cert, module.pki.scheduler_cert, module.pki.scheduler_cert)}"
+  cluster_name      = "kubernetes-the-hard-way"
+  user              = "${list("system:kube-scheduler", "system:kube-scheduler", "system:kube-scheduler")}"
+  client_key        = "${list(module.pki.scheduler_key, module.pki.scheduler_key, module.pki.scheduler_key)}"
+  ca_pem            = "${module.pki.ca_cert}"
+  kubelet_count     = "${var.controllers_count}"
+}
+
+module "kubeconfig-controller-manager" {
+  source = "../kubeconfig"
+
+  nodes             = "${module.controllers.names}"
+  public_ip_address = "127.0.0.1"
+  bastion_host      = "${module.load_balancer.public_ip}"
+  kubeconfig_path   = "/home/zakal/kube-controller-manager.kubeconfig"
+  node_user         = "zakal"
+  client_cert       = "${list(module.pki.controller_manager_cert, module.pki.controller_manager_cert, module.pki.controller_manager_cert)}"
+  cluster_name      = "kubernetes-the-hard-way"
+  user              = "${list("system:kube-controller-manager", "system:kube-controller-manager", "system:kube-controller-manager")}"
+  client_key        = "${list(module.pki.controller_manager_key, module.pki.controller_manager_key, module.pki.controller_manager_key)}"
+  ca_pem            = "${module.pki.ca_cert}"
+  kubelet_count     = "${var.controllers_count}"
+}
+
+module "kubeconfig-admin" {
+  source = "../kubeconfig"
+
+  nodes             = "${module.controllers.names}"
+  public_ip_address = "127.0.0.1"
+  bastion_host      = "${module.load_balancer.public_ip}"
+  kubeconfig_path   = "/home/zakal/admin.kubeconfig"
+  node_user         = "zakal"
+  client_cert       = "${list(module.pki.admin_cert, module.pki.admin_cert, module.pki.admin_cert)}"
+  cluster_name      = "kubernetes-the-hard-way"
+  user              = "${list("admin", "admin", "admin")}"
+  client_key        = "${list(module.pki.admin_key, module.pki.admin_key, module.pki.admin_key)}"
+  ca_pem            = "${module.pki.ca_cert}"
+  kubelet_count     = "${var.controllers_count}"
+}
+
 module "encryption_config" {
   source = "../encryption_config"
 
   node_user           = "zakal"
-  encryption_key_path = "/home/zakal/encryption_config.yml"
+  encryption_key_path = "/home/zakal/encryption-config.yaml"
   nodes               = "${module.controllers.names}"
   bastion_host        = "${module.load_balancer.public_ip}"
   node_count          = "${var.controllers_count}"
@@ -87,4 +135,16 @@ module "etcd" {
   node_count      = "${var.controllers_count}"
   nodes           = "${module.controllers.names}"
   nodes_ips       = "${module.controllers.private_ips}"
+}
+
+module "apiserver" {
+  source = "../control-plane"
+
+  nodes               = "${module.controllers.names}"
+  bastion_host        = "${module.load_balancer.public_ip}"
+  node_user           = "zakal"
+  node_count          = "${var.controllers_count}"
+  nodes_ips           = "${module.controllers.private_ips}"
+  encryption_key_path = "${module.encryption_config.encryption_key_path}"
+  ca_cert             = "${module.pki.ca_cert}"
 }

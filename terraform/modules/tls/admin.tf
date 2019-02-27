@@ -34,3 +34,14 @@ resource "tls_locally_signed_cert" "admin" {
 
   validity_period_hours = 8760
 }
+
+resource "local_file" "admin_cert_local" {
+  filename  = "${path.module}/../../admin.pem"
+  content   = "${tls_locally_signed_cert.admin.cert_pem}"
+}
+
+resource "local_file" "admin_key_local" {
+  filename  = "${path.module}/../../admin-key.pem"
+  content   = "${tls_private_key.admin.private_key_pem}"
+}
+

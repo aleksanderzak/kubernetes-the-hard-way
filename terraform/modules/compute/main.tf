@@ -6,10 +6,11 @@ resource "azurerm_availability_set" "as" {
 }
 
 resource "azurerm_network_interface" "nic" {
-  location            = "${var.location}"
-  name                = "${var.prefix}-${count.index}-nic"
-  resource_group_name = "${var.resource_group_name}"
-  count               = "${var.instances_count}"
+  location              = "${var.location}"
+  name                  = "${var.prefix}-${count.index}-nic"
+  resource_group_name   = "${var.resource_group_name}"
+  count                 = "${var.instances_count}"
+  enable_ip_forwarding  = true
 
   ip_configuration {
     name                          = "${var.prefix}-ip-config"
@@ -25,6 +26,10 @@ resource "azurerm_virtual_machine" "vm" {
   network_interface_ids = ["${azurerm_network_interface.nic.*.id[count.index]}"]
   vm_size               = "${var.vm_size}"
   availability_set_id   = "${azurerm_availability_set.as.id}"
+
+  tags {
+    pod_cidr = "${var.set_cidr_tag == 1 ? "10.200.${count.index}.0/24" : "none" }"
+  }
 
   count = "${var.instances_count}"
 
@@ -58,3 +63,13 @@ resource "azurerm_virtual_machine" "vm" {
   }
 }
 
+data "template_file" "pod_cidr" {
+  count    = "${azurerm_virtual_machine.vm.count}"
+  template = "${lookup(azurerm_virtual_machine.vm.*.tags[count.index], "pod_cidr")}"
+}
+
+output "pod_cidr" {
+  value = [
+    "${data.template_file.pod_cidr.*.rendered}",
+  ]
+}

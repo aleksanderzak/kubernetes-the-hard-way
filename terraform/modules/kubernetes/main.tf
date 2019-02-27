@@ -28,6 +28,7 @@ module "workers" {
   username            = "${var.username}"
   ssh_key             = "${var.ssh_key}"
   subnet_id           = "${module.network.subnet_id}"
+  set_cidr_tag        = 1
 }
 
 module "load_balancer" {
@@ -65,6 +66,22 @@ module "kubeconfig-kubelet" {
   cluster_name      = "kubernetes-the-hard-way"
   user              = "${formatlist("node:%s", module.workers.names)}"
   client_key        = "${module.pki.kubelet_key}"
+  ca_pem            = "${module.pki.ca_cert}"
+  kubelet_count     = "${var.workers_count}"
+}
+
+module "kubeconfig-proxy" {
+  source = "../kubeconfig"
+
+  nodes             = "${module.workers.names}"
+  public_ip_address = "${module.load_balancer.public_ip}"
+  bastion_host      = "${module.load_balancer.public_ip}"
+  kubeconfig_path   = "/home/zakal/kubeconfig-proxy"
+  node_user         = "zakal"
+  cluster_name      = "kubernetes-the-hard-way"
+  user              = "${list("system:kube-proxy", "system:kube-proxy", "system:kube-proxy")}"
+  client_cert       = "${module.pki.proxy_cert}"
+  client_key        = "${module.pki.proxy_key}"
   ca_pem            = "${module.pki.ca_cert}"
   kubelet_count     = "${var.workers_count}"
 }
@@ -147,4 +164,42 @@ module "apiserver" {
   nodes_ips           = "${module.controllers.private_ips}"
   encryption_key_path = "${module.encryption_config.encryption_key_path}"
   ca_cert             = "${module.pki.ca_cert}"
+}
+
+module "bootstrap_workers" {
+  source = "../worker"
+
+  node_count          = "${var.workers_count}"
+  nodes               = "${module.workers.names}"
+  bastion_host        = "${module.load_balancer.public_ip}"
+  node_user           = "zakal"
+}
+
+module "pod_network" {
+  source = "../pod_network"
+
+  location            = "${var.location}"
+  count               = "${var.workers_count}"
+  next_hop_ips        = "${module.workers.private_ips}"
+  prefix              = "${var.prefix}"
+  resource_group_name = "${var.resource_group_name}"
+  address_prefixes    = "${module.workers.pod_cidr}"
+}
+
+data "template_file" "kubeconfig" {
+  template = "${file("${path.module}/../kubeconfig/resources/kubeconfig.template")}"
+
+  vars {
+    ca_pem            = "${module.pki.ca_cert}"
+    public_ip_address = "${module.load_balancer.public_ip}"
+    cluster_name      = "kubernetes-the-hard-way"
+    user              = "admin"
+    client_cert       = "${module.pki.admin_cert}"
+    client_key        = "${module.pki.admin_key}"
+  }
+}
+
+resource "local_file" "admin_kubeconfig" {
+  filename  = "${path.module}/../../kubeconfig"
+  content   = "${data.template_file.kubeconfig.rendered}"
 }

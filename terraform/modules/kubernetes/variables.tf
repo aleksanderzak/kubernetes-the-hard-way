@@ -8,7 +8,7 @@ variable "controllers_count" {
 }
 
 variable "workers_count" {
-  default = 1
+  default = 3
 }
 
 variable "username" {

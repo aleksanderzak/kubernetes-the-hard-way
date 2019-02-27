@@ -20,6 +20,7 @@ resource "tls_cert_request" "kubelet" {
 
   count                 = "${tls_private_key.kubelet.count}"
   ip_addresses          = ["${var.kubelet_node_ips}"]
+  dns_names             = ["${element(var.kubelet_node_names, count.index)}"]
 }
 
 resource "tls_locally_signed_cert" "kubelet" {
@@ -39,5 +40,36 @@ resource "tls_locally_signed_cert" "kubelet" {
 
   validity_period_hours = 8760
   count                 = "${tls_cert_request.kubelet.count}"
+}
+
+resource "null_resource" "distribute_kubelet_cert" {
+  count = "${length(var.kubelet_node_names)}"
+
+  connection {
+    type         = "ssh"
+    user         = "${var.node_user}"
+    host         = "${element(var.kubelet_node_names, count.index)}"
+    bastion_host = "${var.apiserver_public_ip}"
+  }
+
+  provisioner "file" {
+    destination = "/home/zakal/ca.pem"
+    content     = "${tls_self_signed_cert.ca.cert_pem}"
+  }
+
+  provisioner "file" {
+    destination = "/home/zakal/ca-key.pem"
+    content     = "${tls_private_key.ca.private_key_pem}"
+  }
+
+  provisioner "file" {
+    destination = "/home/zakal/${element(var.kubelet_node_names, count.index)}-key.pem"
+    content     = "${tls_private_key.kubelet.*.private_key_pem[count.index]}"
+  }
+
+  provisioner "file" {
+    destination = "/home/zakal/${element(var.kubelet_node_names, count.index)}.pem"
+    content     = "${tls_locally_signed_cert.kubelet.*.cert_pem[count.index]}"
+  }
 }
 

@@ -14,3 +14,7 @@ output "network_interface_count" {
   value = "${azurerm_network_interface.nic.count}"
 }
 
+output "tags" {
+  value = "${azurerm_virtual_machine.vm.*.tags}"
+}
+

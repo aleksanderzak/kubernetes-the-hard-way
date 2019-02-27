@@ -33,3 +33,11 @@ output "controller_manager_cert" {
 output "ca_cert" {
   value = "${tls_self_signed_cert.ca.cert_pem}"
 }
+
+output "proxy_key" {
+  value = "${tls_private_key.proxy.*.private_key_pem}"
+}
+
+output "proxy_cert" {
+  value = "${tls_locally_signed_cert.proxy.*.cert_pem}"
+}

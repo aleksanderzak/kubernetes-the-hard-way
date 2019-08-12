@@ -15,7 +15,11 @@ variable "username" {
   default = "kubeadmin"
 }
 
-variable "ssh_key" {
+variable "admin_ssh_key" {
 
+}
+
+variable "cluster_name" {
+  default = "kubernetes-the-hard-way"
 }
 

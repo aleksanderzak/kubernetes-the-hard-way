@@ -47,7 +47,7 @@ resource "null_resource" "distribute_kubelet_cert" {
 
   connection {
     type         = "ssh"
-    user         = "${var.node_user}"
+    user         = "${var.ssh_user_workers}"
     host         = "${element(var.kubelet_node_names, count.index)}"
     bastion_host = "${var.apiserver_public_ip}"
   }

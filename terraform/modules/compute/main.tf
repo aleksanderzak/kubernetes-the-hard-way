@@ -1,15 +1,17 @@
 resource "azurerm_availability_set" "as" {
+  resource_group_name = "${var.resource_group_name}"
   location            = "${var.location}"
   name                = "${var.prefix}-as"
-  resource_group_name = "${var.resource_group_name}"
+
   managed             = true
 }
 
 resource "azurerm_network_interface" "nic" {
+  resource_group_name   = "${var.resource_group_name}"
   location              = "${var.location}"
   name                  = "${var.prefix}-${count.index}-nic"
-  resource_group_name   = "${var.resource_group_name}"
   count                 = "${var.instances_count}"
+
   enable_ip_forwarding  = true
 
   ip_configuration {
@@ -20,18 +22,18 @@ resource "azurerm_network_interface" "nic" {
 }
 
 resource "azurerm_virtual_machine" "vm" {
-  name                  = "${var.prefix}-${count.index}-vm"
-  location              = "${var.location}"
   resource_group_name   = "${var.resource_group_name}"
+  location              = "${var.location}"
+  name                  = "${var.prefix}-${count.index}-vm"
+  count                 = "${var.instances_count}"
+
   network_interface_ids = ["${azurerm_network_interface.nic.*.id[count.index]}"]
-  vm_size               = "${var.vm_size}"
   availability_set_id   = "${azurerm_availability_set.as.id}"
+  vm_size               = "${var.vm_size}"
 
   tags {
-    pod_cidr = "${var.set_cidr_tag == 1 ? "10.200.${count.index}.0/24" : "none" }"
+    pod_cidr = "${replace(var.pod_cidr_tag, "#i", count.index)}"
   }
-
-  count = "${var.instances_count}"
 
   storage_image_reference {
     publisher = "Canonical"
@@ -49,7 +51,7 @@ resource "azurerm_virtual_machine" "vm" {
   }
 
   os_profile {
-    admin_username  = "${var.username}"
+    admin_username  = "${var.admin_username}"
     computer_name   = "${var.prefix}-${count.index}-vm"
   }
 
@@ -57,8 +59,8 @@ resource "azurerm_virtual_machine" "vm" {
     disable_password_authentication = true
 
     ssh_keys {
-      path     = "/home/${var.username}/.ssh/authorized_keys"
-      key_data = "${var.ssh_key}"
+      path     = "/home/${var.admin_username}/.ssh/authorized_keys"
+      key_data = "${var.admin_ssh_key}"
     }
   }
 }
@@ -68,8 +70,3 @@ data "template_file" "pod_cidr" {
   template = "${lookup(azurerm_virtual_machine.vm.*.tags[count.index], "pod_cidr")}"
 }
 
-output "pod_cidr" {
-  value = [
-    "${data.template_file.pod_cidr.*.rendered}",
-  ]
-}

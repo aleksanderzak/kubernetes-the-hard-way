@@ -26,6 +26,6 @@ module "kubernetes" {
   resource_group_name = "${azurerm_resource_group.kthw.name}"
 
   username            = "${var.username}"
-  ssh_key             = "${var.ssh_key}"
+  admin_ssh_key       = "${var.admin_ssh_key}"
   prefix              = "${var.prefix}"
 }

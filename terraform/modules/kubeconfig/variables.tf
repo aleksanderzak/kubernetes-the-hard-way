@@ -1,10 +1,10 @@
-variable "ca_pem" {}
+variable "ca_cert" {}
 
-variable "public_ip_address" {}
+variable "cluster_ip_address" {}
 
 variable "cluster_name" {}
 
-variable "user" {
+variable "cluster_user" {
   type = "list"
 }
 
@@ -20,10 +20,10 @@ variable "nodes" {
   type = "list"
 }
 
-variable "node_user" {}
+variable "ssh_user" {}
 
-variable "bastion_host" {}
+variable "ssh_bastion_host" {}
 
 variable "kubeconfig_path" {}
 
-variable "kubelet_count" {}
+variable "node_count" {}

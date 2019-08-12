@@ -40,7 +40,7 @@ resource "null_resource" "distribute_service_account_cert" {
 
   connection {
     type         = "ssh"
-    user         = "${var.node_user}"
+    user         = "${var.ssh_user_controllers}"
     host         = "${element(var.apiserver_node_names, count.index)}"
     bastion_host = "${var.apiserver_public_ip}"
   }

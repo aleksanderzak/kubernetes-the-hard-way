@@ -3,9 +3,10 @@ variable "subnet_id" {}
 variable "location" {}
 variable "resource_group_name" {}
 variable "instances_count" {}
-variable "username" {}
-variable "ssh_key" {}
-variable "set_cidr_tag" {
+variable "admin_username" {}
+variable "admin_ssh_key" {}
+
+variable "pod_cidr_tag" {
   default = 0
 }
 
